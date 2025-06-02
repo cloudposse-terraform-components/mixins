@@ -12,5 +12,5 @@ permissions:
 
 jobs:
   scheduled:
-    uses: cloudposse-terraform-components/.github/.github/workflows/shared-terraform-scheduled.yml@merge-queue
+    uses: cloudposse-terraform-components/.github/.github/workflows/shared-terraform-scheduled.yml@main
     secrets: inherit
