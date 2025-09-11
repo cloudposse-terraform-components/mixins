@@ -64,8 +64,7 @@ usage: |-
 
 
 
-include:
-  - "docs/terraform.md"
+include: []
 
 tags:
   - terraform
