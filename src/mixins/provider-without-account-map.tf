@@ -12,8 +12,8 @@ variable "account_map" {
     audit_account_account_name    = optional(string, "")
     root_account_account_name     = optional(string, "")
     identity_account_account_name = optional(string, "")
-    aws_partition                  = optional(string, "aws")
-    iam_role_arn_templates         = optional(map(string), {})
+    aws_partition                 = optional(string, "aws")
+    iam_role_arn_templates        = optional(map(string), {})
   })
   description = "Map of account names (tenant-stage format) to account IDs. Used to verify we're targeting the correct AWS account. Optional attributes support component-specific functionality (e.g., audit_account_account_name for cloudtrail, root_account_account_name for aws-sso)."
   default = {
