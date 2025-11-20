@@ -54,10 +54,13 @@ module "gha_role_name" {
 }
 
 module "gha_assume_role" {
-  source = "../account-map/modules/team-assume-role-policy"
+  source = "github.com/cloudposse-terraform-components/aws-account-map//src/modules/team-assume-role-policy?ref=v1.536.1"
 
   trusted_github_repos = var.github_actions_allowed_repos
   privileged           = var.privileged
+
+  account_map_bypass   = !var.account_map_enabled
+  account_map_defaults = var.account_map
 
   context = module.gha_role_name.context
 }
