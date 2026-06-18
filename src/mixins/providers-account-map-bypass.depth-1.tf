@@ -9,7 +9,10 @@
 # This lets a single component be migrated from the account-map pattern to the
 # account-map-less pattern by flipping `account_map_enabled` per stack — no providers.tf
 # change required. Pair it with `account-verification.mixin.tf` to guard against running
-# against the wrong account when account-map is bypassed.
+# against the wrong account when account-map is bypassed. When `account_map_enabled = false`,
+# also populate `account_map.full_account_map` (the default is empty) so the verification guard
+# can actually validate the ambient credentials; otherwise the guard is a no-op and the component
+# trusts whatever AWS credentials are present in the environment.
 #
 # Depth 1: use this variant for components at `components/terraform/<name>/`.
 # The only difference between the depth variants is the `module.iam_roles` source path.

@@ -66,7 +66,9 @@ account-map-less pattern, toggled per stack by `var.account_map_enabled` (defaul
 
 This lets a component be migrated from account-map to account-map-less by flipping `account_map_enabled` per stack, with
 no `providers.tf` change. Pair it with `account-verification.mixin.tf` to guard against running in the wrong account when
-account-map is bypassed.
+account-map is bypassed. When `account_map_enabled = false`, also populate `account_map.full_account_map` (the default is
+an empty map) so the verification guard can validate the ambient credentials against the expected account — otherwise the
+guard is a no-op and the component simply trusts whatever AWS credentials are present in the environment.
 
 Use the `.depth-1.tf` variant for components at `components/terraform/<name>/` and the `.depth-2.tf` variant for
 components nested one level deeper (`components/terraform/<group>/<name>/`); they differ only in the `module.iam_roles`
