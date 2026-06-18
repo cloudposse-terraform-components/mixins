@@ -1,7 +1,7 @@
 # providers.tf for components that support BOTH authentication patterns:
 #   - WITH account-map  (`account_map_enabled = true`, the default): the AWS provider
 #     assumes the per-stack Terraform role looked up via the `account-map` component's
-#     `iam-roles` submodule (Cloud Posse's standard cross-account "provider hop").
+#     `iam-roles` submodule (the standard cross-account "provider hop").
 #   - WITHOUT account-map (`account_map_enabled = false`): `module.iam_roles` is bypassed
 #     and the provider uses whatever credentials are already in the environment (e.g. when
 #     Atmos Auth delivers target-account credentials directly). No role is assumed.

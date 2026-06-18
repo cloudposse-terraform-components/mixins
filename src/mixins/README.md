@@ -59,7 +59,7 @@ These mixins provide a `providers.tf` for components that must support **both** 
 account-map-less pattern, toggled per stack by `var.account_map_enabled` (default `true`):
 
 - `true` — the AWS provider assumes the per-stack Terraform role looked up via the `account-map` component's `iam-roles`
-  submodule (Cloud Posse's standard cross-account "provider hop").
+  submodule (the standard cross-account "provider hop").
 - `false` — `module.iam_roles` is bypassed (`bypass = !var.account_map_enabled`) and the provider uses the credentials
   already present in the environment (e.g. when Atmos Auth delivers target-account credentials directly); no role is
   assumed.
