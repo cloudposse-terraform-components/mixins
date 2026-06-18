@@ -53,6 +53,27 @@ etc. That is, that it has the following characteristics:
 1. Has a `var.kubernetes_namespace` variable.
 2. Does not already instantiate a Kubernetes provider (only the Helm provider is necessary, typically, for EKS components).
 
+## Mixin: `providers-account-map-bypass.depth-1.tf` / `providers-account-map-bypass.depth-2.tf`
+
+These mixins provide a `providers.tf` for components that must support **both** the account-map pattern and the
+account-map-less pattern, toggled per stack by `var.account_map_enabled` (default `true`):
+
+- `true` — the AWS provider assumes the per-stack Terraform role looked up via the `account-map` component's `iam-roles`
+  submodule (Cloud Posse's standard cross-account "provider hop").
+- `false` — `module.iam_roles` is bypassed (`bypass = !var.account_map_enabled`) and the provider uses the credentials
+  already present in the environment (e.g. when Atmos Auth delivers target-account credentials directly); no role is
+  assumed.
+
+This lets a component be migrated from account-map to account-map-less by flipping `account_map_enabled` per stack, with
+no `providers.tf` change. Pair it with `account-verification.mixin.tf` to guard against running in the wrong account when
+account-map is bypassed.
+
+Use the `.depth-1.tf` variant for components at `components/terraform/<name>/` and the `.depth-2.tf` variant for
+components nested one level deeper (`components/terraform/<group>/<name>/`); they differ only in the `module.iam_roles`
+source path (`../account-map` vs `../../account-map`), because a Terraform module `source` must be a static literal. This
+mirrors the existing `providers.depth-1.tf` / `providers.depth-2.tf` mixins, which perform the hop but do **not** support
+the bypass.
+
 <!-- END OF TERRAFORM-MIXINS DOCS HOOK -->
 <!-- prettier-ignore-end -->
 
@@ -64,7 +85,7 @@ No requirements.
 ## Providers
 
 | Name | Version |
-|------|---------|
+| ---- | ------- |
 | <a name="provider_aws"></a> [aws](#provider\_aws) | n/a |
 | <a name="provider_kubernetes"></a> [kubernetes](#provider\_kubernetes) | n/a |
 | <a name="provider_terraform"></a> [terraform](#provider\_terraform) | n/a |
@@ -72,7 +93,7 @@ No requirements.
 ## Modules
 
 | Name | Source | Version |
-|------|--------|---------|
+| ---- | ------ | ------- |
 | <a name="module_datadog_configuration"></a> [datadog\_configuration](#module\_datadog\_configuration) | ../datadog-configuration/modules/datadog_keys | n/a |
 | <a name="module_iam_roles"></a> [iam\_roles](#module\_iam\_roles) | ../../account-map/modules/iam-roles | n/a |
 | <a name="module_introspection"></a> [introspection](#module\_introspection) | cloudposse/label/null | 0.25.0 |
@@ -81,7 +102,7 @@ No requirements.
 ## Resources
 
 | Name | Type |
-|------|------|
+| ---- | ---- |
 | [kubernetes_manifest.sops_secret](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/manifest) | resource |
 | [terraform_data.account_verification](https://registry.terraform.io/providers/hashicorp/terraform/latest/docs/resources/data) | resource |
 | [aws_caller_identity.account_verification](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
@@ -90,9 +111,9 @@ No requirements.
 ## Inputs
 
 | Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
-| <a name="input_account_map"></a> [account\_map](#input\_account\_map) | Map of account names (tenant-stage format) to account IDs. Used to verify we're targeting the correct AWS account. Optional attributes support component-specific functionality (e.g., audit\_account\_account\_name for cloudtrail, root\_account\_account\_name for aws-sso). | <pre>object({<br/>    full_account_map           = map(string)<br/>    audit_account_account_name = optional(string, "")<br/>    root_account_account_name  = optional(string, "")<br/>  })</pre> | <pre>{<br/>  "audit_account_account_name": "",<br/>  "full_account_map": {},<br/>  "root_account_account_name": ""<br/>}</pre> | no |
-| <a name="input_account_map_enabled"></a> [account\_map\_enabled](#input\_account\_map\_enabled) | Enable the account map component | `bool` | `false` | no |
+| ---- | ----------- | ---- | ------- | :------: |
+| <a name="input_account_map"></a> [account\_map](#input\_account\_map) | Map of account names (tenant-stage format) to account IDs. Used (e.g. by the account-verification mixin) to verify the correct target account when account\_map\_enabled is false. Optional attributes support component-specific functionality (e.g. audit\_account\_account\_name for cloudtrail, root\_account\_account\_name for aws-sso). | <pre>object({<br/>    full_account_map              = map(string)<br/>    audit_account_account_name    = optional(string, "")<br/>    root_account_account_name     = optional(string, "")<br/>    identity_account_account_name = optional(string, "")<br/>    aws_partition                 = optional(string, "aws")<br/>    iam_role_arn_templates        = optional(map(string), {})<br/>  })</pre> | <pre>{<br/>  "audit_account_account_name": "",<br/>  "aws_partition": "aws",<br/>  "full_account_map": {},<br/>  "iam_role_arn_templates": {},<br/>  "identity_account_account_name": "",<br/>  "root_account_account_name": ""<br/>}</pre> | no |
+| <a name="input_account_map_enabled"></a> [account\_map\_enabled](#input\_account\_map\_enabled) | Enable the account-map component lookup. When false, bypass it and use the credentials already present in the environment (account-map-less). | `bool` | `true` | no |
 | <a name="input_helm_manifest_experiment_enabled"></a> [helm\_manifest\_experiment\_enabled](#input\_helm\_manifest\_experiment\_enabled) | Enable storing of the rendered manifest for helm\_release so the full diff of what is changing can been seen in the plan | `bool` | `false` | no |
 | <a name="input_import_profile_name"></a> [import\_profile\_name](#input\_import\_profile\_name) | AWS Profile name to use when importing a resource | `string` | `null` | no |
 | <a name="input_import_role_arn"></a> [import\_role\_arn](#input\_import\_role\_arn) | IAM Role ARN to use when importing a resource | `string` | `null` | no |
@@ -115,6 +136,6 @@ No requirements.
 ## Outputs
 
 | Name | Description |
-|------|-------------|
+| ---- | ----------- |
 | <a name="output_sops_secrets"></a> [sops\_secrets](#output\_sops\_secrets) | List of provisioned SopsSecret Kubernetes resources and their respective templated Secret objects. |
 <!-- END OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
