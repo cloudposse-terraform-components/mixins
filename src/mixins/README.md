@@ -76,6 +76,18 @@ source path (`../account-map` vs `../../account-map`), because a Terraform modul
 mirrors the existing `providers.depth-1.tf` / `providers.depth-2.tf` mixins, which perform the hop but do **not** support
 the bypass.
 
+## Mixin: `account-verification.mixin.tf`
+
+This mixin verifies that Terraform runs in the expected AWS account: it compares the current account ID with the ID that
+`account_map.full_account_map` gives for the account named `<tenant>-<stage>`, and fails the plan on a mismatch. When the
+map is empty or has no `<tenant>-<stage>` entry, the check is skipped.
+
+- `account_verification_enabled` (default `true`) turns the check off.
+- `account_verification_expected_account_name` (default `null`) names the expected account when a stack's account is not
+  named after its stage, e.g. a stage that spans a second account for data residency. The name replaces `<tenant>-<stage>`
+  as the `account_map.full_account_map` key, and the check becomes fail-closed: a name missing from the map fails the
+  plan instead of skipping the check.
+
 <!-- END OF TERRAFORM-MIXINS DOCS HOOK -->
 <!-- prettier-ignore-end -->
 
@@ -116,6 +128,8 @@ No requirements.
 | ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_account_map"></a> [account\_map](#input\_account\_map) | Map of account names (tenant-stage format) to account IDs. Used (e.g. by the account-verification mixin) to verify the correct target account when account\_map\_enabled is false. Optional attributes support component-specific functionality (e.g. audit\_account\_account\_name for cloudtrail, root\_account\_account\_name for aws-sso). | <pre>object({<br/>    full_account_map              = map(string)<br/>    audit_account_account_name    = optional(string, "")<br/>    root_account_account_name     = optional(string, "")<br/>    identity_account_account_name = optional(string, "")<br/>    aws_partition                 = optional(string, "aws")<br/>    iam_role_arn_templates        = optional(map(string), {})<br/>  })</pre> | <pre>{<br/>  "audit_account_account_name": "",<br/>  "aws_partition": "aws",<br/>  "full_account_map": {},<br/>  "iam_role_arn_templates": {},<br/>  "identity_account_account_name": "",<br/>  "root_account_account_name": ""<br/>}</pre> | no |
 | <a name="input_account_map_enabled"></a> [account\_map\_enabled](#input\_account\_map\_enabled) | Enable the account-map component lookup. When false, bypass it and use the credentials already present in the environment (account-map-less). | `bool` | `true` | no |
+| <a name="input_account_verification_enabled"></a> [account\_verification\_enabled](#input\_account\_verification\_enabled) | Enable account verification. When true (default), verify that Terraform is executing in the expected AWS<br/>account by comparing the current account ID against the expected account from account\_map.full\_account\_map. | `bool` | `true` | no |
+| <a name="input_account_verification_expected_account_name"></a> [account\_verification\_expected\_account\_name](#input\_account\_verification\_expected\_account\_name) | Account name (an account\_map.full\_account\_map key) to expect instead of "tenant-stage".<br/>When set, verification always runs and a name missing from account\_map.full\_account\_map fails the check. | `string` | `null` | no |
 | <a name="input_helm_manifest_experiment_enabled"></a> [helm\_manifest\_experiment\_enabled](#input\_helm\_manifest\_experiment\_enabled) | Enable storing of the rendered manifest for helm\_release so the full diff of what is changing can been seen in the plan | `bool` | `false` | no |
 | <a name="input_import_profile_name"></a> [import\_profile\_name](#input\_import\_profile\_name) | AWS Profile name to use when importing a resource | `string` | `null` | no |
 | <a name="input_import_role_arn"></a> [import\_role\_arn](#input\_import\_role\_arn) | IAM Role ARN to use when importing a resource | `string` | `null` | no |
